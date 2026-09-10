@@ -89,7 +89,7 @@ fi
 
 # Start ComfyUI in the background
 echo "Starting ComfyUI in the background..."
-python /ComfyUI/main.py --listen --use-sage-attention &
+python /ComfyUI/main.py --listen &
 
 # Wait for ComfyUI to be ready
 echo "Waiting for ComfyUI to be ready..."
