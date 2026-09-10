@@ -16,9 +16,10 @@ RUN apt-get update --yes && \
 
 # Python dependencies
 # Keep the base PyTorch/CUDA stack untouched. Attention backends can fall back to PyTorch SDPA.
-# Installing SageAttention from PyPI tries to compile CUDA code during the image build and can fail
-# because the RunPod builder has no GPU target available. xformers is optional for this serverless image.
-RUN pip install --no-cache-dir \
+# The base image ships cryptography from Debian without pip RECORD metadata, so replace it first
+# without attempting to uninstall the Debian-managed copy.
+RUN pip install --no-cache-dir --ignore-installed cryptography && \
+    pip install --no-cache-dir \
         misaki[en] "huggingface_hub[hf_transfer]" \
         runpod websocket-client librosa
 
@@ -31,7 +32,7 @@ RUN git clone https://github.com/comfyanonymous/ComfyUI.git && \
     pip uninstall -y comfyui-frontend-package comfyui-workflow-templates \
         comfyui-workflow-templates-core comfyui-workflow-templates-media-api \
         comfyui-workflow-templates-media-image comfyui-workflow-templates-media-other \
-        comfyui-workflow-templates-media-video comfyui-embedded-docs 2>/dev/null || true
+        comfyui-embedded-docs 2>/dev/null || true
 
 # Custom nodes (clone all, then install requirements)
 RUN cd /ComfyUI/custom_nodes && \
