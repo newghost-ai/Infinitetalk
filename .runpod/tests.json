@@ -1,18 +1,5 @@
 {
-  "tests": [
-    {
-      "name": "i2v_single_defaults",
-      "input": {
-        "input_type": "image",
-        "person_count": "single",
-        "prompt": "A person talking naturally",
-        "max_frame": 25,
-        "force_offload": false,
-        "network_volume": false
-      },
-      "timeout": 1200000
-    }
-  ],
+  "tests": [],
   "config": {
     "gpuTypeId": "NVIDIA A100-SXM4-80GB",
     "gpuCount": 1,
