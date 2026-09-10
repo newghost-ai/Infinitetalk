@@ -14,13 +14,12 @@ RUN apt-get update --yes && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Python dependencies (consolidated into one layer)
-# flash_attn: prebuilt wheel for Python 3.12 + CUDA 12.8 + PyTorch 2.8 (NO source compile)
+# Python dependencies
+# WanVideoWrapper defaults to SageAttention/SDPA, so FlashAttention is not required.
+# The previous hard-coded FlashAttention wheel URL no longer exists and broke RunPod builds.
 RUN pip install --no-cache-dir xformers sageattention \
         misaki[en] "huggingface_hub[hf_transfer]" \
-        runpod websocket-client librosa && \
-    pip install --no-cache-dir \
-        "https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.7.16/flash_attn-2.8.3+cu128torch2.8-cp312-cp312-manylinux_2_24_x86_64.whl"
+        runpod websocket-client librosa
 
 WORKDIR /
 
