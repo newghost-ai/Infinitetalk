@@ -15,9 +15,10 @@ RUN apt-get update --yes && \
     rm -rf /var/lib/apt/lists/*
 
 # Python dependencies
-# WanVideoWrapper defaults to SageAttention/SDPA, so FlashAttention is not required.
-# The previous hard-coded FlashAttention wheel URL no longer exists and broke RunPod builds.
-RUN pip install --no-cache-dir xformers sageattention \
+# Keep the base PyTorch/CUDA stack untouched. Attention backends can fall back to PyTorch SDPA.
+# Installing SageAttention from PyPI tries to compile CUDA code during the image build and can fail
+# because the RunPod builder has no GPU target available. xformers is optional for this serverless image.
+RUN pip install --no-cache-dir \
         misaki[en] "huggingface_hub[hf_transfer]" \
         runpod websocket-client librosa
 
