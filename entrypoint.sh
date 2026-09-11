@@ -125,6 +125,9 @@ if [ $wait_count -ge $max_wait ]; then
     exit 1
 fi
 
-# Start the handler in the foreground
-echo "Starting the handler..."
-exec python handler.py
+# Start the handler from ComfyUI's input directory so URL/base64 job media is staged
+# inside the directory accepted by LoadImage/LoadAudio validation.
+echo "Starting the handler from /ComfyUI/input..."
+mkdir -p /ComfyUI/input
+cd /ComfyUI/input
+exec python /handler.py
