@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import mimetypes
 import os
 import tempfile
 import time
 import wave
 from pathlib import Path
+from urllib.parse import urlparse
 
 import requests
 
 API_BASE = "https://api.wavespeed.ai/api/v3"
 MODEL_ID = "wavespeed-ai/infinitetalk-fast/multi"
-DEFAULT_IMAGE = "https://raw.githubusercontent.com/newghost-ai/Infinitetalk/main/test_assets/elle%26lui%20cuisine_first_frame.png"
-DEFAULT_AUDIO = "https://raw.githubusercontent.com/newghost-ai/Infinitetalk/main/test_assets/lead_voice_4s.wav"
 DEFAULT_PROMPT = (
     "Two people in a static kitchen. Only the singing person performs naturally with accurate lip sync, "
     "subtle head movement and very small hand gestures. The other person remains silent and natural, "
@@ -25,8 +25,21 @@ def auth_headers(api_key: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {api_key}"}
 
 
+def is_url(value: str) -> bool:
+    parsed = urlparse(value)
+    return parsed.scheme in {"http", "https"}
+
+
+def wav_duration(path: Path) -> float:
+    with wave.open(str(path), "rb") as wav:
+        frame_rate = wav.getframerate()
+        if frame_rate <= 0:
+            raise ValueError(f"Invalid WAV sample rate: {frame_rate}")
+        return wav.getnframes() / frame_rate
+
+
 def create_silence_wav(path: Path, duration_s: float, sample_rate: int = 16000) -> None:
-    frame_count = int(duration_s * sample_rate)
+    frame_count = int(round(duration_s * sample_rate))
     with wave.open(str(path), "wb") as wav:
         wav.setnchannels(1)
         wav.setsampwidth(2)
@@ -35,10 +48,14 @@ def create_silence_wav(path: Path, duration_s: float, sample_rate: int = 16000) 
 
 
 def upload_file(api_key: str, path: Path) -> str:
+    if not path.is_file():
+        raise FileNotFoundError(path)
+
+    content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
     payload = {
         "filename": path.name,
         "size": path.stat().st_size,
-        "content_type": "audio/wav",
+        "content_type": content_type,
     }
     ticket_response = requests.post(
         f"{API_BASE}/media/uploads",
@@ -61,6 +78,15 @@ def upload_file(api_key: str, path: Path) -> str:
         )
     upload_response.raise_for_status()
     return ticket["download_url"]
+
+
+def resolve_input(api_key: str, value: str, label: str) -> str:
+    if is_url(value):
+        return value
+
+    path = Path(value).expanduser()
+    print(f"Uploading {label}: {path}", flush=True)
+    return upload_file(api_key, path)
 
 
 def submit(api_key: str, payload: dict) -> dict:
@@ -110,13 +136,15 @@ def poll(api_key: str, task: dict, timeout_s: int = 1800) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Elle&Lui WaveSpeed InfiniteTalk smoke test")
+    parser = argparse.ArgumentParser(description="Elle&Lui WaveSpeed InfiniteTalk generation")
     parser.add_argument("--singer-side", choices=("left", "right"), required=True,
-                        help="Side of LUI in the input image")
-    parser.add_argument("--image", default=DEFAULT_IMAGE)
-    parser.add_argument("--audio", default=DEFAULT_AUDIO)
-    parser.add_argument("--duration", type=float, default=4.0,
-                        help="Silence duration for the non-singing character")
+                        help="Side of the singing character as seen on screen")
+    parser.add_argument("--image", required=True,
+                        help="Local image path or public image URL")
+    parser.add_argument("--audio", required=True,
+                        help="Local WAV path or public audio URL")
+    parser.add_argument("--duration", type=float,
+                        help="Only needed when --audio is a URL and duration cannot be detected locally")
     parser.add_argument("--prompt", default=DEFAULT_PROMPT)
     parser.add_argument("--seed", type=int, default=2)
     args = parser.parse_args()
@@ -125,19 +153,37 @@ def main() -> None:
     if not api_key:
         raise SystemExit("Missing WAVESPEED_API_KEY environment variable")
 
+    if is_url(args.audio):
+        if args.duration is None:
+            raise SystemExit("When --audio is a URL, also provide --duration in seconds")
+        duration_s = args.duration
+    else:
+        audio_path = Path(args.audio).expanduser()
+        if not audio_path.is_file():
+            raise SystemExit(f"Audio file not found: {audio_path}")
+        duration_s = wav_duration(audio_path)
+
+    if not is_url(args.image) and not Path(args.image).expanduser().is_file():
+        raise SystemExit(f"Image file not found: {Path(args.image).expanduser()}")
+
+    print(f"Detected audio duration: {duration_s:.3f}s", flush=True)
+
     with tempfile.TemporaryDirectory() as tmp:
         silence_path = Path(tmp) / "silent_character.wav"
-        create_silence_wav(silence_path, args.duration)
+        create_silence_wav(silence_path, duration_s)
+
+        image_url = resolve_input(api_key, args.image, "image")
+        singer_audio_url = resolve_input(api_key, args.audio, "singer audio")
         print("Uploading silent track...", flush=True)
         silence_url = upload_file(api_key, silence_path)
 
         if args.singer_side == "left":
-            left_audio, right_audio = args.audio, silence_url
+            left_audio, right_audio = singer_audio_url, silence_url
         else:
-            left_audio, right_audio = silence_url, args.audio
+            left_audio, right_audio = silence_url, singer_audio_url
 
         payload = {
-            "image": args.image,
+            "image": image_url,
             "left_audio": left_audio,
             "right_audio": right_audio,
             "order": "meanwhile",
