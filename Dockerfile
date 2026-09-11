@@ -6,6 +6,7 @@ FROM runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
+ENV HF_HUB_ENABLE_HF_TRANSFER=0
 
 # System packages (ffmpeg for video, git-lfs for model downloads, libgl1 for OpenCV)
 RUN apt-get update --yes && \
