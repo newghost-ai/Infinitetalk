@@ -15,7 +15,7 @@ download_models() {
     local dest="$1"
     echo "Downloading models to $dest ..."
     mkdir -p "$dest/diffusion_models" "$dest/loras" "$dest/vae" \
-             "$dest/text_encoders" "$dest/clip_vision" \
+             "$dest/text_encoders" "$dest/clip_vision" "$dest/wav2vec2" \
              "$dest/transformers/TencentGameMate"
 
     # Parallel wget downloads (~33GB total)
@@ -35,6 +35,8 @@ download_models() {
          -O "$dest/clip_vision/clip_vision_h.safetensors" &
     wget -q https://huggingface.co/Kijai/MelBandRoFormer_comfy/resolve/main/MelBandRoformer_fp16.safetensors \
          -O "$dest/diffusion_models/MelBandRoformer_fp16.safetensors" &
+    wget -q https://huggingface.co/Kijai/wav2vec2_safetensors/resolve/main/wav2vec2-chinese-base_fp16.safetensors \
+         -O "$dest/wav2vec2/wav2vec2-chinese-base_fp16.safetensors" &
     wait
 
     # Verify all downloads succeeded
@@ -46,7 +48,8 @@ download_models() {
         "$dest/vae/Wan2_1_VAE_bf16.safetensors" \
         "$dest/text_encoders/umt5-xxl-enc-fp8_e4m3fn.safetensors" \
         "$dest/clip_vision/clip_vision_h.safetensors" \
-        "$dest/diffusion_models/MelBandRoformer_fp16.safetensors"; do
+        "$dest/diffusion_models/MelBandRoformer_fp16.safetensors" \
+        "$dest/wav2vec2/wav2vec2-chinese-base_fp16.safetensors"; do
         [ -s "$f" ] || { echo "FAILED: $f is missing or empty"; exit 1; }
     done
 
@@ -74,7 +77,7 @@ if [ -d "$VOLUME_DIR" ]; then
         download_models "$VOLUME_MODEL_DIR"
     fi
     # Symlink each model subdir from volume into ComfyUI
-    for subdir in diffusion_models loras vae text_encoders clip_vision transformers; do
+    for subdir in diffusion_models loras vae text_encoders clip_vision wav2vec2 transformers; do
         rm -rf "$MODEL_DIR/$subdir"
         ln -sf "$VOLUME_MODEL_DIR/$subdir" "$MODEL_DIR/$subdir"
     done
