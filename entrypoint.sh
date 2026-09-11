@@ -87,15 +87,30 @@ else
     fi
 fi
 
-# Start ComfyUI in the background
+# Start ComfyUI in the background. Keep its stdout/stderr attached to the worker logs.
 echo "Starting ComfyUI in the background..."
-python /ComfyUI/main.py --listen &
+python -u /ComfyUI/main.py --listen 0.0.0.0 --port 8188 &
+COMFY_PID=$!
+echo "ComfyUI PID: $COMFY_PID"
 
 # Wait for ComfyUI to be ready
 echo "Waiting for ComfyUI to be ready..."
 max_wait=300
 wait_count=0
 while [ $wait_count -lt $max_wait ]; do
+    # Fail immediately if ComfyUI has already crashed, instead of hiding the real error for 300s.
+    if ! kill -0 "$COMFY_PID" 2>/dev/null; then
+        set +e
+        wait "$COMFY_PID"
+        comfy_exit=$?
+        set -e
+        echo "Error: ComfyUI process exited before becoming ready (exit code $comfy_exit)"
+        if [ "$comfy_exit" -eq 0 ]; then
+            exit 1
+        fi
+        exit "$comfy_exit"
+    fi
+
     if curl -s http://127.0.0.1:8188/ > /dev/null 2>&1; then
         echo "ComfyUI is ready!"
         break
@@ -106,7 +121,7 @@ while [ $wait_count -lt $max_wait ]; do
 done
 
 if [ $wait_count -ge $max_wait ]; then
-    echo "Error: ComfyUI failed to start within $max_wait seconds"
+    echo "Error: ComfyUI failed to start within $max_wait seconds (process still alive, PID $COMFY_PID)"
     exit 1
 fi
 
