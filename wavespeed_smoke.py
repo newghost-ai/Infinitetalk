@@ -17,7 +17,9 @@ DEFAULT_PROMPT = (
     "Two people in a static kitchen. Only the singing person performs naturally with accurate lip sync, "
     "subtle head movement and very small hand gestures. The other person remains silent and natural, "
     "mouth closed, with only subtle blinking and tiny posture reactions. Camera fixed. "
-    "Background and objects remain completely static."
+    "The environment, furniture, table, lighting and all background objects remain completely static and unchanged. "
+    "No objects appear, disappear, move, transform or pop into the scene. "
+    "Nothing appears in either person's hands and no new props are introduced."
 )
 
 
