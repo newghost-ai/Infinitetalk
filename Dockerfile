@@ -25,14 +25,11 @@ RUN pip install --no-cache-dir --ignore-installed cryptography && \
 
 WORKDIR /
 
-# ComfyUI core (strip frontend packages we don't need for headless serverless)
+# ComfyUI core
+# Keep the frontend/runtime packages installed: current ComfyUI expects them at startup even for headless use.
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git && \
     cd /ComfyUI && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip uninstall -y comfyui-frontend-package comfyui-workflow-templates \
-        comfyui-workflow-templates-core comfyui-workflow-templates-media-api \
-        comfyui-workflow-templates-media-image comfyui-workflow-templates-media-other \
-        comfyui-embedded-docs 2>/dev/null || true
+    pip install --no-cache-dir -r requirements.txt
 
 # Custom nodes (clone all, then install requirements)
 RUN cd /ComfyUI/custom_nodes && \
