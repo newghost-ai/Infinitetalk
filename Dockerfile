@@ -28,7 +28,7 @@ WORKDIR /
 
 # ComfyUI core
 # Keep the frontend/runtime packages installed: current ComfyUI expects them at startup even for headless use.
-RUN git clone https://github.com/comfyanonymous/ComfyUI.git && \
+RUN git clone --branch v0.19.1 --depth 1 https://github.com/Comfy-Org/ComfyUI.git /ComfyUI && \
     cd /ComfyUI && \
     pip install --no-cache-dir -r requirements.txt
 
@@ -44,7 +44,7 @@ RUN cd /ComfyUI/custom_nodes && \
     cd ../ComfyUI-KJNodes && pip install --no-cache-dir -r requirements.txt && \
     cd ../ComfyUI-VideoHelperSuite && pip install --no-cache-dir -r requirements.txt && \
     cd ../ComfyUI-MelBandRoFormer && pip install --no-cache-dir -r requirements.txt && \
-    cd ../ComfyUI-WanVideoWrapper && pip install --no-cache-dir -r requirements.txt && \
+    cd ../ComfyUI-WanVideoWrapper && git checkout 088128b224242e110d3906c6750e9a3a348a659b && pip install --no-cache-dir -r requirements.txt && \
     pip install --no-cache-dir "transformers==4.57.6" && \
     find /ComfyUI -name ".git" -type d -exec rm -rf {} + 2>/dev/null || true && \
     find /ComfyUI -name "*.pyc" -delete 2>/dev/null || true && \
