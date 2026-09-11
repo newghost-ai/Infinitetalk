@@ -44,6 +44,7 @@ RUN cd /ComfyUI/custom_nodes && \
     cd ../ComfyUI-VideoHelperSuite && pip install --no-cache-dir -r requirements.txt && \
     cd ../ComfyUI-MelBandRoFormer && pip install --no-cache-dir -r requirements.txt && \
     cd ../ComfyUI-WanVideoWrapper && pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir "transformers==4.57.6" && \
     find /ComfyUI -name ".git" -type d -exec rm -rf {} + 2>/dev/null || true && \
     find /ComfyUI -name "*.pyc" -delete 2>/dev/null || true && \
     find /ComfyUI -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
