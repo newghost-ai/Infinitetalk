@@ -1,5 +1,22 @@
 {
-  "tests": [],
+  "tests": [
+    {
+      "name": "i2v_duo_4s_smoke",
+      "input": {
+        "input_type": "image",
+        "person_count": "single",
+        "prompt": "Two people in a static kitchen. Only the man sings naturally with accurate lip sync, subtle head movement and very small hand gestures. The woman remains silent and natural with only subtle blinking and tiny posture reactions. Camera fixed. Background and objects remain completely static.",
+        "image_url": "https://raw.githubusercontent.com/newghost-ai/Infinitetalk/main/test_assets/elle%26lui%20cuisine_first_frame.png",
+        "wav_url": "https://raw.githubusercontent.com/newghost-ai/Infinitetalk/main/test_assets/lead_voice_4s.wav",
+        "width": 480,
+        "height": 832,
+        "max_frame": 100,
+        "force_offload": false,
+        "network_volume": false
+      },
+      "timeout": 1200000
+    }
+  ],
   "config": {
     "gpuTypeId": "NVIDIA A100-SXM4-80GB",
     "gpuCount": 1,
